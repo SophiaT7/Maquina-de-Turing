@@ -26,7 +26,4 @@ O **HashMap** é usado para armazenar rapidamente:
 
 **Benefício principal:** Com o HashMap, o simulador consegue processar **arquivos enormes** de entrada sem travar, mantendo a execução rápida e escalável.
 
----
-
-## Estrutura do Projeto
 
