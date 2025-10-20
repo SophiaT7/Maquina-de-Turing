@@ -10,6 +10,8 @@ class Transicao {
     String write;
     String dir;
 
+
+    //org.json para ler diretamente do arquivo json e criar objetos transicao automaticamente
     public Transicao(JSONObject obj) {
         this.from = obj.getInt("from");
         this.to = obj.getInt("to");
@@ -27,12 +29,12 @@ public class Turing {
             return;
         }
 
-        // Arquivos
+        // arquivos
         String maquinaFile = args[0];
         String entradaFile = args[1];
         String saidaFile = "saida.txt";
 
-        // Carrega máquina
+        // le json da maquina e carrega os parametro-- estado inicial, finais, simbolo branco e as transicoesd
         String jsonContent = Files.readString(Path.of(maquinaFile));
         JSONObject maquina = new JSONObject(jsonContent);
 
@@ -44,16 +46,16 @@ public class Turing {
         }
         String branco = maquina.getString("white");
 
-        // Indexa transições em HashMap (rápido)
+        // uso um hashmap dentro de outro hashmap para acessar as transicoes de forma rápida
         Map<Integer, Map<String, Transicao>> transicoes = new HashMap<>();
         JSONArray trans = maquina.getJSONArray("transitions");
         for (int i = 0; i < trans.length(); i++) {
             Transicao t = new Transicao(trans.getJSONObject(i));
             transicoes.putIfAbsent(t.from, new HashMap<>());
             transicoes.get(t.from).put(t.read, t);
-        }
+        }//em vez de procurar a transição ideal percorrendo uma lista, eu acesso diretamente(estado, simbolo)
 
-        // Fita inicial -> HashMap (só guarda posições usadas)
+        // fita eh outro hashmap, n precisa criar vetor enorme apenas as possicoes q sao usadas sao armazenadas
         String entrada = Files.readString(Path.of(entradaFile)).trim();
         Map<Integer, String> fita = new HashMap<>();
         for (int i = 0; i < entrada.length(); i++) {
@@ -66,7 +68,7 @@ public class Turing {
 
         for (int step = 0; step < maxSteps; step++) {
             String simbolo = fita.getOrDefault(cabeca, branco);
-
+            //lew o simbolo atual, aplica a transição correspondente, escreve na fita, move a cabeça e muda de estado
             Transicao t = transicoes
                 .getOrDefault(estado, Collections.emptyMap())
                 .get(simbolo);
@@ -89,7 +91,9 @@ public class Turing {
             }
         }
 
-        // Salvar fita final (apenas do menor ao maior índice tocado)
+        // aq ele ve quem eh o maior e mnor valor
+        // como a fita eh um hashmap, as posicoes so existem qnd acessadas, assim ele precisa saber o maior valor (fim) o primeiro valor(inicio)
+        // mais rapido pois ele escreve so qnd for relevante
         int min = fita.keySet().stream().min(Integer::compareTo).orElse(0);
         int max = fita.keySet().stream().max(Integer::compareTo).orElse(0);
 
@@ -97,6 +101,7 @@ public class Turing {
         for (int i = min; i <= max; i++) {
             sb.append(fita.getOrDefault(i, branco));
         }
+        //vai gravar conteudo numa fita e arq saida.txt 1(aceita) ou 0(rejeita)
         Files.writeString(Path.of(saidaFile), sb.toString());
 
         // imprime resultado
